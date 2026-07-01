@@ -101,6 +101,21 @@ class HyperLogLog
     }
 
     /**
+     * Calculate theoretical error rate.
+     *
+     * @return float Theoretical error rate.
+     */
+    public function theoreticalErrorRate(): float
+    {
+        return 1.04 / sqrt($this->m);
+    }
+
+    public function measureError(int $estimate, int $real): int
+    {
+        return $estimate - $real;
+    }
+
+    /**
      * Hashes a value using the selected hashing algorithm.
      *
      * @param string $value Input value.
