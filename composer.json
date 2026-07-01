@@ -1,0 +1,13 @@
+{
+  "name": "hichxm/hyperloglog",
+  "description": "A PHP implementation of HyperLogLog algorithm",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Hichxm\\HyperLogLog\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^8.3"
+  }
+}
