@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Hichxm\HyperLogLog;
 
 /**
@@ -7,7 +9,7 @@ namespace Hichxm\HyperLogLog;
  *
  * This probabilistic data structure estimates the number of distinct elements
  * in a multiset using limited memory. It is based on stochastic averaging
- * and uses hashing to distribute values across registers.
+ * and uses hashing to distribute values across counters.
  *
  * @see https://en.wikipedia.org/wiki/HyperLogLog
  */
@@ -20,13 +22,13 @@ class HyperLogLog
 
     private int $m;
 
-    /** @var array<int, int> Registers storing maximum rho values */
+    /** @var array<int, int> Counters storing maximum rho values */
     private array $counters;
 
     /**
      * HyperLogLog constructor.
      *
-     * @param int    $counterBits   Number of bits used to define the number of registers (m = 2^counterBits).
+     * @param int    $counterBits   Number of bits used to define the number of counters (m = 2^counterBits).
      *                              Higher values improve accuracy but increase memory usage.
      * @param string $hashAlgorithm Hash algorithm used for input hashing (e.g. xxh3, murmur3f, sha256).
      */
@@ -38,6 +40,61 @@ class HyperLogLog
         $this->m = 1 << $this->counterBits;
 
         $this->counters = array_fill(0, $this->m, 0);
+    }
+
+    public function getCounterBits(): int
+    {
+        return $this->counterBits;
+    }
+
+    public function setCounterBits(int $counterBits): HyperLogLog
+    {
+        $this->counterBits = $counterBits;
+
+        return $this;
+    }
+
+    public function getHashAlgorithm(): string
+    {
+        return $this->hashAlgorithm;
+    }
+
+    public function setHashAlgorithm(string $hashAlgorithm): HyperLogLog
+    {
+        $this->hashAlgorithm = $hashAlgorithm;
+
+        return $this;
+    }
+
+    public function getM(): int
+    {
+        return $this->m;
+    }
+
+    public function setM(int $m): HyperLogLog
+    {
+        $this->m = $m;
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function getCounters(): array
+    {
+        return $this->counters;
+    }
+
+    /**
+     * @param array<int, int> $counters
+     * @return $this
+     */
+    public function setCounters(array $counters): HyperLogLog
+    {
+        $this->counters = $counters;
+
+        return $this;
     }
 
     /**
@@ -102,11 +159,17 @@ class HyperLogLog
     /**
      * Calculate theoretical error rate.
      *
+     * @param int $m number of counters
+     *
      * @return float theoretical error rate
      */
-    public function theoreticalErrorRate(): float
+    public function theoreticalErrorRate(int $m): float
     {
-        return 1.04 / sqrt($this->m);
+        if ($m < 1) {
+            throw new \InvalidArgumentException('Invalid number of counters, $m must be greater than 0');
+        }
+
+        return 1.04 / sqrt($m);
     }
 
     public function measureError(int $estimate, int $real): int
@@ -117,19 +180,23 @@ class HyperLogLog
     /**
      * Returns the bias correction constant alpha(m).
      *
-     * @param int $m number of registers
+     * @param int $m number of counters
      *
      * @return float correction constant
      */
     public function alpha(int $m): float
     {
+        if ($m < 1) {
+            throw new \InvalidArgumentException('Invalid number of counters, $m must be greater than 0');
+        }
+
         return match ($m) {
             2 => 0.46852874309841,
             4 => 0.56806457964166,
             8 => 0.63557660535301,
-            16 => 0.67573042918204,
-            32 => 0.69777200036277,
-            64 => 0.70934095483950,
+            16 => 0.673,
+            32 => 0.697,
+            64 => 0.709,
             128 => 0.71527049326382,
             256 => 0.71827259324955,
             default => 0.7213 / (1 + 1.079 / $m),
@@ -139,21 +206,25 @@ class HyperLogLog
     /**
      * Computes the raw HyperLogLog cardinality estimate.
      *
-     * @param int   $m number of registers
+     * @param int   $m number of counters
      * @param float $Z harmonic mean of register values
      *
      * @return float raw estimate
      */
     public function estimate(int $m, float $Z): float
     {
+        if ($Z <= 0) {
+            throw new \InvalidArgumentException('Invalid harmonic mean, $Z must be positive');
+        }
+
         return $this->alpha($m) * $m * $m / $Z;
     }
 
     /**
      * Linear counting estimator used for small cardinalities.
      *
-     * @param int $V number of empty registers
-     * @param int $m number of registers
+     * @param int $V number of empty counters
+     * @param int $m number of counters
      *
      * @return float estimated cardinality
      */
@@ -167,8 +238,8 @@ class HyperLogLog
      *
      * Delegates to linear counting.
      *
-     * @param int $V number of empty registers
-     * @param int $m number of registers
+     * @param int $V number of empty counters
+     * @param int $m number of counters
      *
      * @return float corrected estimate
      */

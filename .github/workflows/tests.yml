@@ -1,0 +1,47 @@
+name: Tests PHPUnit
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test sur plusieurs versions de PHP (ajustez selon vos prérequis)
+        php-version: [ '8.0', '8.1', '8.2', '8.3', '8.4' ]
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Configuration de PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Validation du fichier composer.json
+        run: composer validate --strict
+
+      - name: Récupération du cache Composer
+        id: composer-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php-version }}-
+
+      - name: Installation des dépendances
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress
+
+      - name: Exécution des tests PHPUnit
+        run: vendor/bin/phpunit
