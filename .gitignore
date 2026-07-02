@@ -88,3 +88,4 @@ composer.lock
 .php-cs-fixer.cache
 
 .idea/
+.phpunit.cache
