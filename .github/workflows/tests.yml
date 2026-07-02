@@ -24,7 +24,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-          coverage: none
+          coverage: pcov
           tools: composer:v2
 
       - name: Validation du fichier composer.json
@@ -43,5 +43,5 @@ jobs:
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: composer install --prefer-dist --no-progress
 
-      - name: Exécution des tests PHPUnit
-        run: vendor/bin/phpunit tests
+      - name: Exécution des tests PHPUnit avec couverture de code
+        run: vendor/bin/phpunit tests --coverage-text
