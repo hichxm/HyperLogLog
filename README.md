@@ -1,7 +1,7 @@
 # HyperLogLog for PHP
 
-A lightweight and dependency-free PHP implementation of the **HyperLogLog** probabilistic data structure for *
-*approximate cardinality estimation**.
+A lightweight and dependency-free PHP implementation of the **HyperLogLog** probabilistic data structure for 
+**approximate cardinality estimation**.
 
 HyperLogLog allows you to estimate the number of **distinct elements** in very large datasets while using only a small,
 fixed amount of memory.
