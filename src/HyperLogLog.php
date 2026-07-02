@@ -26,8 +26,8 @@ class HyperLogLog
     /**
      * HyperLogLog constructor.
      *
-     * @param int $counterBits Number of bits used to define the number of registers (m = 2^counterBits).
-     *                         Higher values improve accuracy but increase memory usage.
+     * @param int    $counterBits   Number of bits used to define the number of registers (m = 2^counterBits).
+     *                              Higher values improve accuracy but increase memory usage.
      * @param string $hashAlgorithm Hash algorithm used for input hashing (e.g. xxh3, murmur3f, sha256).
      */
     public function __construct(int $counterBits = 5, string $hashAlgorithm = 'xxh3')
@@ -46,8 +46,7 @@ class HyperLogLog
      * The value is hashed, split into register index and leading zero count,
      * and the register is updated with the maximum observed rho value.
      *
-     * @param string $value Element to insert.
-     * @return void
+     * @param string $value element to insert
      */
     public function add(string $value): void
     {
@@ -70,7 +69,7 @@ class HyperLogLog
      * - Raw estimate
      * - Large range correction
      *
-     * @return float Estimated cardinality.
+     * @return float estimated cardinality
      */
     public function count(): float
     {
@@ -80,7 +79,7 @@ class HyperLogLog
         foreach ($this->counters as $counter) {
             $Z += 2 ** (-$counter);
 
-            if ($counter === 0) {
+            if (0 === $counter) {
                 ++$V;
             }
         }
@@ -103,7 +102,7 @@ class HyperLogLog
     /**
      * Calculate theoretical error rate.
      *
-     * @return float Theoretical error rate.
+     * @return float theoretical error rate
      */
     public function theoreticalErrorRate(): float
     {
@@ -116,11 +115,89 @@ class HyperLogLog
     }
 
     /**
+     * Returns the bias correction constant alpha(m).
+     *
+     * @param int $m number of registers
+     *
+     * @return float correction constant
+     */
+    public function alpha(int $m): float
+    {
+        return match ($m) {
+            2 => 0.46852874309841,
+            4 => 0.56806457964166,
+            8 => 0.63557660535301,
+            16 => 0.67573042918204,
+            32 => 0.69777200036277,
+            64 => 0.70934095483950,
+            128 => 0.71527049326382,
+            256 => 0.71827259324955,
+            default => 0.7213 / (1 + 1.079 / $m),
+        };
+    }
+
+    /**
+     * Computes the raw HyperLogLog cardinality estimate.
+     *
+     * @param int   $m number of registers
+     * @param float $Z harmonic mean of register values
+     *
+     * @return float raw estimate
+     */
+    public function estimate(int $m, float $Z): float
+    {
+        return $this->alpha($m) * $m * $m / $Z;
+    }
+
+    /**
+     * Linear counting estimator used for small cardinalities.
+     *
+     * @param int $V number of empty registers
+     * @param int $m number of registers
+     *
+     * @return float estimated cardinality
+     */
+    public function estimateUsingLinearCounting(int $V, int $m): float
+    {
+        return $m * log($m / $V);
+    }
+
+    /**
+     * Small cardinality correction.
+     *
+     * Delegates to linear counting.
+     *
+     * @param int $V number of empty registers
+     * @param int $m number of registers
+     *
+     * @return float corrected estimate
+     */
+    public function estimateUsingSmallCardinalitiesApproach(int $V, int $m): float
+    {
+        return $this->estimateUsingLinearCounting($V, $m);
+    }
+
+    /**
+     * Large cardinality correction.
+     *
+     * Applies log-based correction to avoid saturation bias.
+     *
+     * @param float $E raw estimate
+     *
+     * @return float corrected estimate
+     */
+    public function estimateUsingLargeCardinalitiesApproach(float $E): float
+    {
+        return -$this->_precalculatedTwoPow32 * log(1 - $E / $this->_precalculatedTwoPow32);
+    }
+
+    /**
      * Hashes a value using the selected hashing algorithm.
      *
-     * @param string $value Input value.
-     * @param string $hashAlgorithm Hash algorithm name.
-     * @return string Binary hash output.
+     * @param string $value         input value
+     * @param string $hashAlgorithm hash algorithm name
+     *
+     * @return string binary hash output
      */
     private function hash(string $value, string $hashAlgorithm): string
     {
@@ -132,9 +209,10 @@ class HyperLogLog
      *
      * The first `counterBits` bits of the hash determine the register.
      *
-     * @param string $hash Binary hash.
-     * @param int $counterBits Number of bits used for indexing.
-     * @return int Register index.
+     * @param string $hash        binary hash
+     * @param int    $counterBits number of bits used for indexing
+     *
+     * @return int register index
      */
     private function counter(string $hash, int $counterBits): int
     {
@@ -155,9 +233,10 @@ class HyperLogLog
      *
      * Counts leading zeros starting after the register bits.
      *
-     * @param string $hash Binary hash.
-     * @param int $counterBits Number of bits reserved for register selection.
-     * @return int Position of first 1-bit (rho value).
+     * @param string $hash        binary hash
+     * @param int    $counterBits number of bits reserved for register selection
+     *
+     * @return int position of first 1-bit (rho value)
      */
     private function rho(string $hash, int $counterBits): int
     {
@@ -176,77 +255,5 @@ class HyperLogLog
         }
 
         return $rho;
-    }
-
-    /**
-     * Returns the bias correction constant alpha(m).
-     *
-     * @param int $m Number of registers.
-     * @return float Correction constant.
-     */
-    public function alpha(int $m): float
-    {
-        return match ($m) {
-            2 => 0.46852874309841,
-            4 => 0.56806457964166,
-            8 => 0.63557660535301,
-            16 => 0.67573042918204,
-            32 => 0.69777200036277,
-            64 => 0.70934095483950,
-            128 => 0.71527049326382,
-            256 => 0.71827259324955,
-            default => 0.7213 / (1 + 1.079 / $m),
-        };
-    }
-
-    /**
-     * Computes the raw HyperLogLog cardinality estimate.
-     *
-     * @param int $m Number of registers.
-     * @param float $Z Harmonic mean of register values.
-     * @return float Raw estimate.
-     */
-    public function estimate(int $m, float $Z): float
-    {
-        return $this->alpha($m) * $m * $m / $Z;
-    }
-
-    /**
-     * Linear counting estimator used for small cardinalities.
-     *
-     * @param int $V Number of empty registers.
-     * @param int $m Number of registers.
-     * @return float Estimated cardinality.
-     */
-    public function estimateUsingLinearCounting(int $V, int $m): float
-    {
-        return $m * log($m / $V);
-    }
-
-    /**
-     * Small cardinality correction.
-     *
-     * Delegates to linear counting.
-     *
-     * @param int $V Number of empty registers.
-     * @param int $m Number of registers.
-     * @return float Corrected estimate.
-     */
-    public function estimateUsingSmallCardinalitiesApproach(int $V, int $m): float
-    {
-        return $this->estimateUsingLinearCounting($V, $m);
-    }
-
-    /**
-     * Large cardinality correction.
-     *
-     * Applies log-based correction to avoid saturation bias.
-     *
-     * @param float $E Raw estimate.
-     * @return float Corrected estimate.
-     */
-    public function estimateUsingLargeCardinalitiesApproach(float $E): float
-    {
-        return -$this->_precalculatedTwoPow32 * log(1 - $E / $this->_precalculatedTwoPow32);
     }
 }
