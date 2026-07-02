@@ -8,9 +8,7 @@ use Hichxm\HyperLogLog\HyperLogLog;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @internal
- *
- * @coversNothing
+ * @covers \Hichxm\HyperLogLog\HyperLogLog
  */
 class HyperLogLogTest extends TestCase
 {
