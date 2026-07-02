@@ -1,8 +1,10 @@
 # HyperLogLog for PHP
 
-A lightweight and dependency-free PHP implementation of the **HyperLogLog** probabilistic data structure for **approximate cardinality estimation**.
+A lightweight and dependency-free PHP implementation of the **HyperLogLog** probabilistic data structure for *
+*approximate cardinality estimation**.
 
-HyperLogLog allows you to estimate the number of **distinct elements** in very large datasets while using only a small, fixed amount of memory.
+HyperLogLog allows you to estimate the number of **distinct elements** in very large datasets while using only a small,
+fixed amount of memory.
 
 ## Features
 
@@ -19,7 +21,8 @@ HyperLogLog allows you to estimate the number of **distinct elements** in very l
 - **PHP 8.0, 8.1, 8.2, 8.3, 8.4 and 8.5**
 - No external dependencies
 
-> **Note:** The `xxh3` and `xxh128` hash algorithms are available only when supported by your PHP version and build. If unavailable, you can use any other algorithm returned by `hash_algos()`, such as `sha256`, `sha512`, or `md5`.
+> **Note:** The `xxh3` and `xxh128` hash algorithms are available only when supported by your PHP version and build. If
+> unavailable, you can use any other algorithm returned by `hash_algos()`, such as `sha256`, `sha512`, or `md5`.
 
 ## Installation
 
@@ -60,7 +63,7 @@ new HyperLogLog(
 ### Parameters
 
 | Parameter       | Description                                                                          |
-| --------------- | ------------------------------------------------------------------------------------ |
+|-----------------|--------------------------------------------------------------------------------------|
 | `counterBits`   | Number of bits used to select registers. The number of registers is `2^counterBits`. |
 | `hashAlgorithm` | Any hashing algorithm supported by PHP's `hash()` function.                          |
 
