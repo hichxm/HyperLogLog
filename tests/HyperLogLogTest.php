@@ -166,5 +166,7 @@ class HyperLogLogTest extends TestCase
             $hll->estimateUsingLargeCardinalitiesApproach($rawEstimate),
             0.001
         );
+
+        $this->assertTrue(false);
     }
 }
