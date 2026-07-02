@@ -88,6 +88,7 @@ class HyperLogLog
 
     /**
      * @param array<int, int> $counters
+     *
      * @return $this
      */
     public function setCounters(array $counters): HyperLogLog
