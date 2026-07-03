@@ -100,7 +100,7 @@ class HyperLogLog
      *
      * @param string $value element to insert
      */
-    public function add(string $value): void
+    public function add(string $value)
     {
         $hashString = $this->hash($value, $this->hashAlgorithm);
 
