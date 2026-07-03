@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Hichxm\HyperLogLog;
 
+use InvalidArgumentException;
+
 /**
  * HyperLogLog implementation for approximate cardinality estimation.
  *
@@ -28,6 +30,8 @@ class HyperLogLog
     /** @var bool Indicates if the selected hash algorithm produces less than 64 bits */
     private bool $needsPadding;
 
+    private array $availableHashAlgorithms;
+
     /**
      * HyperLogLog constructor.
      *
@@ -37,6 +41,12 @@ class HyperLogLog
      */
     public function __construct(int $counterBits = 5, string $hashAlgorithm = 'xxh3')
     {
+        $this->availableHashAlgorithms = hash_algos();
+
+        if (!in_array($hashAlgorithm, $this->availableHashAlgorithms)) {
+            throw new InvalidArgumentException('Invalid hash algorithm');
+        }
+
         $this->counterBits = $counterBits;
         $this->hashAlgorithm = $hashAlgorithm;
 
