@@ -45,3 +45,71 @@ jobs:
 
       - name: Exécution des tests PHPUnit avec couverture de code
         run: vendor/bin/phpunit tests --coverage-text
+
+  phpstan:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v7
+
+      - name: Configuration de PHP 8.0
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.0
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Validation du fichier composer.json
+        run: composer validate --strict
+
+      - name: Récupération du cache Composer
+        id: composer-cache
+        uses: actions/cache@v5
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-8.0-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.0-
+            
+      - name: Installation des dépendances
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress
+
+      - name: Exécution analyze static
+        run: vendor/bin/phpstan analyse -c phpstan.neon
+
+  php-cs-fixer:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v7
+
+      - name: Configuration de PHP 8.0
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.0
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Validation du fichier composer.json
+        run: composer validate --strict
+
+      - name: Récupération du cache Composer
+        id: composer-cache
+        uses: actions/cache@v5
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-8.0-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.0-
+
+      - name: Installation des dépendances
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress
+
+      - name: Exécution analyze static
+        run: vendor/bin/php-cs-fixer check
