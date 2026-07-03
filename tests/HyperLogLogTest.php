@@ -17,11 +17,13 @@ class HyperLogLogTest extends TestCase
 {
     public function testConstructorSetsDefaultValues(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
 
         // Check if the default counter bits and hash algorithms are set
         $this->assertSame(5, $hll->getCounterBits());
-        $this->assertSame('xxh3', $hll->getHashAlgorithm());
+        $this->assertSame($hashAlgorithm, $hll->getHashAlgorithm());
 
         // m should be 2^5 = 32
         $this->assertSame(32, $hll->getM());
@@ -51,7 +53,9 @@ class HyperLogLogTest extends TestCase
 
     public function testGettersAndSetters(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
 
         // Create a mock state to inject into the instance
         $mockCounters = array_fill(0, 32, 1);
@@ -154,7 +158,9 @@ class HyperLogLogTest extends TestCase
 
     public function testTheoreticalErrorRateCalculation(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
 
         // Theoretical error rate formula: 1.04 / sqrt(m)
         // 1.04 / sqrt(16) = 1.04 / 4 = 0.26
@@ -163,7 +169,9 @@ class HyperLogLogTest extends TestCase
 
     public function testTheoreticalErrorRateThrowsExceptionForInvalidM(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid number of counters, $m must be greater than 0');
@@ -173,7 +181,9 @@ class HyperLogLogTest extends TestCase
 
     public function testMeasureError(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
 
         // measureError simply returns the difference: estimate - real
         $this->assertSame(5, $hll->measureError(15, 10));
@@ -182,7 +192,9 @@ class HyperLogLogTest extends TestCase
 
     public function testAlphaCalculationValues(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
 
         // Test exact predefined constants for m=2 and m=16
         $this->assertEqualsWithDelta(0.46852874309841, $hll->alpha(2), 0.0000001);
@@ -195,7 +207,9 @@ class HyperLogLogTest extends TestCase
 
     public function testAlphaThrowsExceptionForInvalidM(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
 
         $this->expectException(\InvalidArgumentException::class);
         $hll->alpha(0);
@@ -203,7 +217,9 @@ class HyperLogLogTest extends TestCase
 
     public function testEstimateThrowsExceptionForInvalidZ(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid harmonic mean, $Z must be positive');
@@ -214,7 +230,9 @@ class HyperLogLogTest extends TestCase
 
     public function testEstimateUsingLinearCounting(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
         $m = 64;
         $v = 16; // 16 empty counters out of 64
 
@@ -227,7 +245,10 @@ class HyperLogLogTest extends TestCase
 
     public function testEstimateUsingLargeCardinalitiesApproach(): void
     {
-        $hll = new HyperLogLog();
+        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+
+        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+
         $rawEstimate = 3_000_000_000;
         $twoPow32 = 4_294_967_296;
 

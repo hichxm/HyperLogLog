@@ -30,8 +30,6 @@ class HyperLogLog
     /** @var bool Indicates if the selected hash algorithm produces less than 64 bits */
     private bool $needsPadding;
 
-    private array $availableHashAlgorithms;
-
     /**
      * HyperLogLog constructor.
      *
@@ -41,9 +39,7 @@ class HyperLogLog
      */
     public function __construct(int $counterBits = 5, string $hashAlgorithm = 'xxh3')
     {
-        $this->availableHashAlgorithms = hash_algos();
-
-        if (!in_array($hashAlgorithm, $this->availableHashAlgorithms)) {
+        if (!in_array($hashAlgorithm, hash_algos())) {
             throw new InvalidArgumentException('Invalid hash algorithm');
         }
 
