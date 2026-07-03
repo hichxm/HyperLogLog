@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Hichxm\HyperLogLog;
 
-use InvalidArgumentException;
-
 /**
  * HyperLogLog implementation for approximate cardinality estimation.
  *
@@ -17,6 +15,7 @@ use InvalidArgumentException;
  */
 class HyperLogLog
 {
+    /** @var int */
     private const TWO_POW_32 = 4_294_967_296;
     private int $counterBits;
 
@@ -34,13 +33,13 @@ class HyperLogLog
      * HyperLogLog constructor.
      *
      * @param int    $counterBits   Number of bits used to define the number of counters (m = 2^counterBits).
-     * Higher values improve accuracy but increase memory usage.
+     *                              Higher values improve accuracy but increase memory usage.
      * @param string $hashAlgorithm Hash algorithm used for input hashing (e.g. xxh3, murmur3f, crc32, sha256).
      */
     public function __construct(int $counterBits = 5, string $hashAlgorithm = 'xxh3')
     {
         if (!in_array($hashAlgorithm, hash_algos())) {
-            throw new InvalidArgumentException('Invalid hash algorithm');
+            throw new \InvalidArgumentException('Invalid hash algorithm');
         }
 
         $this->counterBits = $counterBits;
@@ -108,7 +107,14 @@ class HyperLogLog
 
         // Extraction des 8 premiers octets (64 bits) sous forme d'entier (Big Endian)
         // unpack('J') ignore nativement tout ce qui dépasse 8 octets (ex: sha256, md5)
-        $hashInt = unpack('J', $hashString)[1];
+        $hashIntUnpacked = unpack('J', $hashString);
+
+        if (false === $hashIntUnpacked) {
+            throw new \InvalidArgumentException('Invalid hash value');
+        }
+
+        /** @var int $hashInt */
+        $hashInt = $hashIntUnpacked[1];
 
         $counter = $this->counter($hashInt, $this->counterBits);
 

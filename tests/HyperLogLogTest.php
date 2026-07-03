@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Hichxm\HyperLogLog\Tests;
 
 use Hichxm\HyperLogLog\HyperLogLog;
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -47,7 +46,7 @@ class HyperLogLogTest extends TestCase
     public function testConstructorFailsWithInvalidHashAlgorithm(): void
     {
         // In PHP 8+, the hash() function throws a ValueError if the provided algorithm does not exist.
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new HyperLogLog(10, 'invalid_algo_123');
     }
 
