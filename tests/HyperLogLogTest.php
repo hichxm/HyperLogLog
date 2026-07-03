@@ -256,7 +256,7 @@ class HyperLogLogTest extends TestCase
     public function testMergeThrowsExceptionForMismatchedHashAlgorithms(): void
     {
         $hll1 = new HyperLogLog(10, 'sha256');
-        $hll2 = new HyperLogLog(10, 'xxh3');
+        $hll2 = new HyperLogLog(10, 'sha1');
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Cannot merge HyperLogLog instances with different counter bits or hash algorithms.');
