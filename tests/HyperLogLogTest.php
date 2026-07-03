@@ -9,6 +9,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \Hichxm\HyperLogLog\HyperLogLog
+ *
+ * @internal
  */
 class HyperLogLogTest extends TestCase
 {
