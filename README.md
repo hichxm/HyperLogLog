@@ -6,6 +6,8 @@ A lightweight and dependency-free PHP implementation of the **HyperLogLog** prob
 HyperLogLog allows you to estimate the number of **distinct elements** in very large datasets while using only a small,
 fixed amount of memory.
 
+View on Packagist: [hichxm/hyperloglog](https://packagist.org/packages/hichxm/hyperloglog)
+
 ## Features
 
 * 🚀 Fast approximate distinct counting
