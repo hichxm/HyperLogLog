@@ -38,15 +38,6 @@ class HyperLogLogTest extends TestCase
     {
         $hll = new HyperLogLog();
 
-        $hll->setCounterBits(8);
-        $this->assertSame(8, $hll->getCounterBits());
-
-        $hll->setHashAlgorithm('md5');
-        $this->assertSame('md5', $hll->getHashAlgorithm());
-
-        $hll->setM(256);
-        $this->assertSame(256, $hll->getM());
-
         $mockCounters = array_fill(0, 256, 1);
         $hll->setCounters($mockCounters);
         $this->assertSame($mockCounters, $hll->getCounters());

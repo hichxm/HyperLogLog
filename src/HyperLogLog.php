@@ -47,35 +47,14 @@ class HyperLogLog
         return $this->counterBits;
     }
 
-    public function setCounterBits(int $counterBits): HyperLogLog
-    {
-        $this->counterBits = $counterBits;
-
-        return $this;
-    }
-
     public function getHashAlgorithm(): string
     {
         return $this->hashAlgorithm;
     }
 
-    public function setHashAlgorithm(string $hashAlgorithm): HyperLogLog
-    {
-        $this->hashAlgorithm = $hashAlgorithm;
-
-        return $this;
-    }
-
     public function getM(): int
     {
         return $this->m;
-    }
-
-    public function setM(int $m): HyperLogLog
-    {
-        $this->m = $m;
-
-        return $this;
     }
 
     /**
