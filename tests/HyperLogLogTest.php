@@ -431,8 +431,10 @@ class HyperLogLogTest extends TestCase
      * @param float $expected The expected value
      * @param float $actual   The actual value to test
      * @param float $delta    The allowed margin of error
+     *
+     * @return void
      */
-    private function assertFloatEquals(float $expected, float $actual, float $delta): void
+    private function assertFloatEquals(float $expected, float $actual, float $delta)
     {
         $difference = abs($expected - $actual);
 
