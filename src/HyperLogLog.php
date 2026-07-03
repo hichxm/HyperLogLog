@@ -15,7 +15,7 @@ namespace Hichxm\HyperLogLog;
  */
 class HyperLogLog
 {
-    private int $_precalculatedTwoPow32 = 4_294_967_296;
+    private const TWO_POW_32 = 4_294_967_296;
     private int $counterBits;
 
     private string $hashAlgorithm;
@@ -70,7 +70,7 @@ class HyperLogLog
      *
      * @return $this
      */
-    public function setCounters(array $counters): HyperLogLog
+    public function setCounters(array $counters): self
     {
         $this->counters = $counters;
 
@@ -129,7 +129,7 @@ class HyperLogLog
         }
 
         // Large range correction
-        if ($E > $this->_precalculatedTwoPow32 / 30) {
+        if ($E > $this::TWO_POW_32 / 30) {
             $E = $this->estimateUsingLargeCardinalitiesApproach($E);
         }
 
@@ -239,7 +239,7 @@ class HyperLogLog
      */
     public function estimateUsingLargeCardinalitiesApproach(float $E): float
     {
-        return -$this->_precalculatedTwoPow32 * log(1 - $E / $this->_precalculatedTwoPow32);
+        return -$this::TWO_POW_32 * log(1 - $E / $this::TWO_POW_32);
     }
 
     /**
