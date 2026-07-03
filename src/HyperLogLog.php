@@ -164,6 +164,30 @@ class HyperLogLog
     }
 
     /**
+     * Merges another HyperLogLog instance into the current one.
+     *
+     * @param self $other The other HyperLogLog instance to merge
+     *
+     * @return $this
+     *
+     * @throws \InvalidArgumentException if the configurations do not match
+     */
+    public function merge(self $other): self
+    {
+        if ($this->m !== $other->getM() || $this->hashAlgorithm !== $other->getHashAlgorithm()) {
+            throw new \InvalidArgumentException('Cannot merge HyperLogLog instances with different counter bits or hash algorithms.');
+        }
+
+        $this->counters = array_map(
+            static fn (int $counter, int $otherCounter): int => max($counter, $otherCounter),
+            $this->counters,
+            $other->counters
+        );
+
+        return $this;
+    }
+
+    /**
      * Calculate theoretical error rate.
      *
      * @param int $m number of counters

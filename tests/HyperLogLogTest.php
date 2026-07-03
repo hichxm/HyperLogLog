@@ -242,6 +242,87 @@ class HyperLogLogTest extends TestCase
         $this->assertEqualsWithDelta($expected, $hll->estimateUsingSmallCardinalitiesApproach($v, $m), 0.001);
     }
 
+    public function testMergeThrowsExceptionForMismatchedCounterBits(): void
+    {
+        $hll1 = new HyperLogLog(10, 'sha256');
+        $hll2 = new HyperLogLog(12, 'sha256');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cannot merge HyperLogLog instances with different counter bits or hash algorithms.');
+
+        $hll1->merge($hll2);
+    }
+
+    public function testMergeThrowsExceptionForMismatchedHashAlgorithms(): void
+    {
+        $hll1 = new HyperLogLog(10, 'sha256');
+        $hll2 = new HyperLogLog(10, 'sha1');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cannot merge HyperLogLog instances with different counter bits or hash algorithms.');
+
+        $hll1->merge($hll2);
+    }
+
+    public function testMergeUpdatesCountersWithMaxValues(): void
+    {
+        $hll1 = new HyperLogLog(5, 'sha256'); // m = 32
+        $hll2 = new HyperLogLog(5, 'sha256'); // m = 32
+
+        // Create initial states
+        $counters1 = array_fill(0, 32, 1);
+        $counters1[0] = 5;
+        $counters1[1] = 2;
+        $counters1[2] = 0;
+
+        $counters2 = array_fill(0, 32, 0);
+        $counters2[0] = 3;
+        $counters2[1] = 8;
+        $counters2[2] = 4;
+
+        $hll1->setCounters($counters1);
+        $hll2->setCounters($counters2);
+
+        // Perform merge
+        $result = $hll1->merge($hll2);
+
+        // Expected result should be max(counters1[i], counters2[i])
+        $expected = array_fill(0, 32, 1);
+        $expected[0] = 5; // max(5, 3)
+        $expected[1] = 8; // max(2, 8)
+        $expected[2] = 4; // max(0, 4)
+
+        $this->assertSame($expected, $hll1->getCounters());
+
+        // Assert it returns itself to allow method chaining
+        $this->assertSame($hll1, $result);
+    }
+
+    public function testMergeEstimatesUnionOfTwoSetsCorrectly(): void
+    {
+        $hll1 = new HyperLogLog(12, 'sha256');
+        $hll2 = new HyperLogLog(12, 'sha256');
+
+        // Add 2000 unique items to HLL1
+        for ($i = 0; $i < 2000; ++$i) {
+            $hll1->add('set_a_'.$i);
+        }
+
+        // Add 3000 unique items to HLL2
+        for ($i = 0; $i < 3000; ++$i) {
+            $hll2->add('set_b_'.$i);
+        }
+
+        // Merge HLL2 into HLL1
+        $hll1->merge($hll2);
+
+        $estimate = $hll1->count();
+
+        // The merged HyperLogLog should estimate a cardinality of roughly 5000
+        $this->assertGreaterThan(4500, $estimate);
+        $this->assertLessThan(5500, $estimate);
+    }
+
     public function testEstimateUsingLargeCardinalitiesApproach(): void
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
