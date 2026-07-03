@@ -1,6 +1,6 @@
 # HyperLogLog for PHP
 
-A lightweight and dependency-free PHP implementation of the **HyperLogLog** probabilistic data structure for 
+A lightweight and dependency-free PHP implementation of the **HyperLogLog** probabilistic data structure for
 **approximate cardinality estimation**.
 
 HyperLogLog allows you to estimate the number of **distinct elements** in very large datasets while using only a small,
@@ -17,6 +17,20 @@ View on Packagist: [hichxm/hyperloglog](https://packagist.org/packages/hichxm/hy
 * 📊 Theoretical error rate calculation
 * 🧮 Small and large cardinality bias corrections
 * ✅ Strict types and fully documented source code
+
+## When to Use HyperLogLog
+
+HyperLogLog is well suited for:
+
+* Counting unique visitors
+* Counting unique IP addresses
+* Analytics pipelines
+* Large log processing
+* Stream processing
+* Database statistics
+* Big data applications
+
+It is **not** appropriate when an exact distinct count is required.
 
 ## Requirements
 
@@ -144,20 +158,6 @@ $error = $hll->theoreticalErrorRate($hll->getM());
 ```php
 $error = $hll->measureError($estimated, $actual);
 ```
-
-## When to Use HyperLogLog
-
-HyperLogLog is well suited for:
-
-* Counting unique visitors
-* Counting unique IP addresses
-* Analytics pipelines
-* Large log processing
-* Stream processing
-* Database statistics
-* Big data applications
-
-It is **not** appropriate when an exact distinct count is required.
 
 ## References
 
