@@ -13,6 +13,9 @@ return (new Config())
         '@PhpCsFixer' => true,
         'nullable_type_declaration_for_default_null_value' => false,
         'phpdoc_no_empty_return' => false,
+        'modifier_keywords' => [
+            'elements' => ['property', 'method'],
+        ],
     ])
     // 💡 by default, Fixer looks for `*.php` files excluding `./vendor/` - here, you can groom this config
     ->setFinder(

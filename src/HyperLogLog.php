@@ -16,7 +16,7 @@ namespace Hichxm\HyperLogLog;
 class HyperLogLog
 {
     /** @var int */
-    public const TWO_POW_32 = 4294967296;
+    const TWO_POW_32 = 4294967296;
 
     /** @var int */
     private $counterBits;
