@@ -54,10 +54,10 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v7
 
-      - name: Configuration de PHP 8.0
+      - name: Configuration de PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.0
+          php-version: 8.3
           coverage: pcov
           tools: composer:v2
 
@@ -69,9 +69,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: vendor
-          key: ${{ runner.os }}-php-8.0-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-8.0-
+            ${{ runner.os }}-php-8.3-
             
       - name: Installation des dépendances
         if: steps.composer-cache.outputs.cache-hit != 'true'
@@ -88,10 +88,10 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v7
 
-      - name: Configuration de PHP 8.0
+      - name: Configuration de PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.0
+          php-version: 8.3
           coverage: pcov
           tools: composer:v2
 
@@ -103,13 +103,13 @@ jobs:
         uses: actions/cache@v5
         with:
           path: vendor
-          key: ${{ runner.os }}-php-8.0-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-8.0-
+            ${{ runner.os }}-php-8.3-
 
       - name: Installation des dépendances
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: composer install --prefer-dist --no-progress
 
       - name: Exécution analyze static
-        run: vendor/bin/php-cs-fixer check
+        run: vendor/bin/php-cs-fixer check --diff
