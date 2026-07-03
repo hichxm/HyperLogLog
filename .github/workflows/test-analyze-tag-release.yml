@@ -1,4 +1,4 @@
-name: Tests PHPUnit
+name: Test, Analyze, Tag and Release.
 
 on:
   push:
@@ -113,3 +113,28 @@ jobs:
 
       - name: Exécution analyze static
         run: vendor/bin/php-cs-fixer check --diff
+
+  tag-and-release:
+    needs: [ "test", "php-cs-fixer", "phpstan" ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v7
+
+      - name: Création du Tag Automatique
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+
+      - name: Création d'une Release GitHub
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
