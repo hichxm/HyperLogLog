@@ -15,7 +15,8 @@ namespace Hichxm\HyperLogLog;
  */
 class HyperLogLog
 {
-    private int $_precalculatedTwoPow32 = 4_294_967_296;
+    /** @var int */
+    private const TWO_POW_32 = 4_294_967_296;
     private int $counterBits;
 
     private string $hashAlgorithm;
@@ -25,21 +26,31 @@ class HyperLogLog
     /** @var array<int, int> Counters storing maximum rho values */
     private array $counters;
 
+    /** @var bool Indicates if the selected hash algorithm produces less than 64 bits */
+    private bool $needsPadding;
+
     /**
      * HyperLogLog constructor.
      *
      * @param int    $counterBits   Number of bits used to define the number of counters (m = 2^counterBits).
      *                              Higher values improve accuracy but increase memory usage.
-     * @param string $hashAlgorithm Hash algorithm used for input hashing (e.g. xxh3, murmur3f, sha256).
+     * @param string $hashAlgorithm Hash algorithm used for input hashing (e.g. xxh3, murmur3f, crc32, sha256).
      */
     public function __construct(int $counterBits = 5, string $hashAlgorithm = 'xxh3')
     {
+        if (!in_array($hashAlgorithm, hash_algos())) {
+            throw new \InvalidArgumentException('Invalid hash algorithm');
+        }
+
         $this->counterBits = $counterBits;
         $this->hashAlgorithm = $hashAlgorithm;
 
         $this->m = 1 << $this->counterBits;
 
         $this->counters = array_fill(0, $this->m, 0);
+
+        $testHash = hash($this->hashAlgorithm, 'test', true);
+        $this->needsPadding = strlen($testHash) < 8;
     }
 
     public function getCounterBits(): int
@@ -47,35 +58,14 @@ class HyperLogLog
         return $this->counterBits;
     }
 
-    public function setCounterBits(int $counterBits): HyperLogLog
-    {
-        $this->counterBits = $counterBits;
-
-        return $this;
-    }
-
     public function getHashAlgorithm(): string
     {
         return $this->hashAlgorithm;
     }
 
-    public function setHashAlgorithm(string $hashAlgorithm): HyperLogLog
-    {
-        $this->hashAlgorithm = $hashAlgorithm;
-
-        return $this;
-    }
-
     public function getM(): int
     {
         return $this->m;
-    }
-
-    public function setM(int $m): HyperLogLog
-    {
-        $this->m = $m;
-
-        return $this;
     }
 
     /**
@@ -91,7 +81,7 @@ class HyperLogLog
      *
      * @return $this
      */
-    public function setCounters(array $counters): HyperLogLog
+    public function setCounters(array $counters): self
     {
         $this->counters = $counters;
 
@@ -101,18 +91,34 @@ class HyperLogLog
     /**
      * Add an element to the HyperLogLog structure.
      *
-     * The value is hashed, split into register index and leading zero count,
-     * and the register is updated with the maximum observed rho value.
+     * The value is hashed, converted to a 64-bit integer, split into register index
+     * and leading zero count, and the register is updated with the maximum observed rho value.
      *
      * @param string $value element to insert
      */
     public function add(string $value): void
     {
-        $hash = $this->hash($value, $this->hashAlgorithm);
+        $hashString = $this->hash($value, $this->hashAlgorithm);
 
-        $counter = $this->counter($hash, $this->counterBits);
+        // Comblement avec des octets nuls si le hachage fait moins de 64 bits (ex: crc32)
+        if ($this->needsPadding) {
+            $hashString = str_pad($hashString, 8, "\x00", STR_PAD_RIGHT);
+        }
 
-        $rho = $this->rho($hash, $this->counterBits);
+        // Extraction des 8 premiers octets (64 bits) sous forme d'entier (Big Endian)
+        // unpack('J') ignore nativement tout ce qui dépasse 8 octets (ex: sha256, md5)
+        $hashIntUnpacked = unpack('J', $hashString);
+
+        if (false === $hashIntUnpacked) {
+            throw new \InvalidArgumentException('Invalid hash value');
+        }
+
+        /** @var int $hashInt */
+        $hashInt = $hashIntUnpacked[1];
+
+        $counter = $this->counter($hashInt, $this->counterBits);
+
+        $rho = $this->rho($hashInt, $this->counterBits);
 
         if ($rho > $this->counters[$counter]) {
             $this->counters[$counter] = $rho;
@@ -150,7 +156,7 @@ class HyperLogLog
         }
 
         // Large range correction
-        if ($E > $this->_precalculatedTwoPow32 / 30) {
+        if ($E > $this::TWO_POW_32 / 30) {
             $E = $this->estimateUsingLargeCardinalitiesApproach($E);
         }
 
@@ -260,7 +266,7 @@ class HyperLogLog
      */
     public function estimateUsingLargeCardinalitiesApproach(float $E): float
     {
-        return -$this->_precalculatedTwoPow32 * log(1 - $E / $this->_precalculatedTwoPow32);
+        return -$this::TWO_POW_32 * log(1 - $E / $this::TWO_POW_32);
     }
 
     /**
@@ -277,49 +283,40 @@ class HyperLogLog
     }
 
     /**
-     * Extracts the register index from the hash.
+     * Extracts the register index from the 64-bit integer hash using bitwise shift.
      *
-     * The first `counterBits` bits of the hash determine the register.
-     *
-     * @param string $hash        binary hash
-     * @param int    $counterBits number of bits used for indexing
+     * @param int $hash        64-bit integer hash
+     * @param int $counterBits number of bits used for indexing
      *
      * @return int register index
      */
-    private function counter(string $hash, int $counterBits): int
+    private function counter(int $hash, int $counterBits): int
     {
-        $counter = 0;
+        $shift = 64 - $counterBits;
+        $mask = (1 << $counterBits) - 1;
 
-        for ($bit = 0; $bit < $counterBits; ++$bit) {
-            $byte = ord($hash[intdiv($bit, 8)]);
-
-            $counter = ($counter << 1)
-                | (($byte >> (7 - ($bit % 8))) & 1);
-        }
-
-        return $counter;
+        return ($hash >> $shift) & $mask;
     }
 
     /**
-     * Computes the position of the first set bit (rho function).
+     * Computes the position of the first set bit (rho function) using bitwise shifts.
      *
      * Counts leading zeros starting after the register bits.
      *
-     * @param string $hash        binary hash
-     * @param int    $counterBits number of bits reserved for register selection
+     * @param int $hash        64-bit integer hash
+     * @param int $counterBits number of bits reserved for register selection
      *
      * @return int position of first 1-bit (rho value)
      */
-    private function rho(string $hash, int $counterBits): int
+    private function rho(int $hash, int $counterBits): int
     {
-        $bitLength = strlen($hash) * 8;
-
         $rho = 1;
+        $maxBitsToCheck = 64 - $counterBits;
 
-        for ($bit = $counterBits; $bit < $bitLength; ++$bit) {
-            $byte = ord($hash[intdiv($bit, 8)]);
+        for ($i = 0; $i < $maxBitsToCheck; ++$i) {
+            $bitPos = 63 - $counterBits - $i;
 
-            if (($byte >> (7 - ($bit % 8))) & 1) {
+            if (($hash >> $bitPos) & 1) {
                 return $rho;
             }
 
