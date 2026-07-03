@@ -16,7 +16,7 @@ namespace Hichxm\HyperLogLog;
 class HyperLogLog
 {
     /** @var int */
-    const TWO_POW_32 = 4294967296;
+    public const TWO_POW_32 = 4294967296;
 
     /** @var int */
     private $counterBits;
@@ -99,6 +99,8 @@ class HyperLogLog
      * and leading zero count, and the register is updated with the maximum observed rho value.
      *
      * @param string $value element to insert
+     *
+     * @return void
      */
     public function add(string $value)
     {

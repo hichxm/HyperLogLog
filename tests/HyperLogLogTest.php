@@ -20,6 +20,10 @@ class HyperLogLogTest extends TestCase
     /** @var int */
     private $defaultCounterBits = 5;
 
+    /**
+     * @param array<array-key, mixed> $data
+     * @param int|string              $dataName
+     */
     public function __construct(string $name = null, array $data = [], $dataName = '')
     {
         parent::__construct($name, $data, $dataName);

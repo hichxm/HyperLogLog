@@ -8,8 +8,11 @@ use PhpCsFixer\Finder;
 return (new Config())
     ->setRiskyAllowed(false)
     ->setRules([
+        '@PHP7x0Migration' => true,
         '@Symfony' => true,
         '@PhpCsFixer' => true,
+        'nullable_type_declaration_for_default_null_value' => false,
+        'phpdoc_no_empty_return' => false,
     ])
     // 💡 by default, Fixer looks for `*.php` files excluding `./vendor/` - here, you can groom this config
     ->setFinder(
