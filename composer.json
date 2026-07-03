@@ -1,7 +1,29 @@
 {
   "name": "hichxm/hyperloglog",
-  "description": "A PHP implementation of HyperLogLog algorithm",
+  "type": "library",
+  "description": "A PHP implementation of the HyperLogLog algorithm.",
+  "keywords": [
+    "hyperloglog",
+    "algorithm",
+    "probabilistic",
+    "data-structures",
+    "php"
+  ],
   "license": "MIT",
+  "authors": [
+    {
+      "name": "Hicham SLIMANI",
+      "email": "hicham.slimani.fr@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^8.0"
+  },
+  "require-dev": {
+    "php-cs-fixer/shim": "^3.95",
+    "phpstan/phpstan": "^2.2",
+    "phpunit/phpunit": "^9.6"
+  },
   "autoload": {
     "psr-4": {
       "Hichxm\\HyperLogLog\\": "src/"
@@ -12,12 +34,20 @@
       "Hichxm\\HyperLogLog\\Tests\\": "tests/"
     }
   },
-  "require": {
-    "php": "^8.0"
+  "scripts": {
+    "test": "phpunit tests",
+    "test:coverage": "phpunit tests --coverage-text",
+    "analyze": "phpstan analyse -c phpstan.neon",
+    "lint": "php-cs-fixer check --diff",
+    "lint:fix": "php-cs-fixer fix",
+    "check-all": [
+      "@lint",
+      "@analyze",
+      "@test"
+    ]
   },
-  "require-dev": {
-    "php-cs-fixer/shim": "^v3.95.11",
-    "phpstan/phpstan": "^2.2.3",
-    "phpunit/phpunit": "^9"
+  "config": {
+    "sort-packages": true,
+    "optimize-autoloader": true
   }
 }
