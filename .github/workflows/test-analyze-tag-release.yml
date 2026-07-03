@@ -72,7 +72,7 @@ jobs:
           key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-8.3-
-            
+
       - name: Installation des dépendances
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: composer install --prefer-dist --no-progress
@@ -115,6 +115,7 @@ jobs:
         run: vendor/bin/php-cs-fixer check --diff
 
   tag-and-release:
+    if: github.event_name == 'push'
     needs: [ "test", "php-cs-fixer", "phpstan" ]
     runs-on: ubuntu-latest
 
