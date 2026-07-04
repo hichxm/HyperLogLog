@@ -1,7 +1,10 @@
 # HyperLogLog for PHP
 
 ![Latest Stable Version](https://img.shields.io/packagist/v/hichxm/hyperloglog?label=version)
-![Packagist Downloads](https://img.shields.io/packagist/dt/hichxm/hyperloglog?label=packagist+downloads&color=brightgreen)
+![Supported PHP Versions](https://img.shields.io/packagist/dependency-v/hichxm/hyperloglog/php?logo=php)
+
+![Tests](https://img.shields.io/github/actions/workflow/status/hichxm/hyperloglog/test-analyze-tag-release.yml?label=tests&logo=github)
+
 
 A lightweight and dependency-free PHP implementation of the **HyperLogLog** probabilistic data structure for
 **approximate cardinality estimation**.
