@@ -139,9 +139,9 @@ class HyperLogLog
      * - Raw estimate
      * - Large range correction
      *
-     * @return float estimated cardinality
+     * @return int estimated cardinality
      */
-    public function count(): float
+    public function count(): int
     {
         $Z = 0.0;
         $V = 0;
@@ -166,7 +166,7 @@ class HyperLogLog
             $E = $this->estimateUsingLargeCardinalitiesApproach($E);
         }
 
-        return $E;
+        return (int) $E;
     }
 
     /**
