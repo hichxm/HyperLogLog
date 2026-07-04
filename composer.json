@@ -17,12 +17,12 @@
     }
   ],
   "require": {
-    "php": "^8.0"
+    "php": "^8.0|^7.0"
   },
   "require-dev": {
     "php-cs-fixer/shim": "^3.95",
     "phpstan/phpstan": "^2.2",
-    "phpunit/phpunit": "^9.6"
+    "phpunit/phpunit": "^9.6|^8.5|^6.5"
   },
   "autoload": {
     "psr-4": {

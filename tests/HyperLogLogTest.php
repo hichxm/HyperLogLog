@@ -14,15 +14,33 @@ use PHPUnit\Framework\TestCase;
  */
 class HyperLogLogTest extends TestCase
 {
-    public function testConstructorSetsDefaultValues(): void
-    {
-        $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+    /** @var string */
+    private $defaultHashAlgorithm = 'xxh3';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+    /** @var int */
+    private $defaultCounterBits = 5;
+
+    /**
+     * @param array<array-key, mixed> $data
+     * @param int|string              $dataName
+     */
+    public function __construct(string $name = null, array $data = [], $dataName = '')
+    {
+        parent::__construct($name, $data, $dataName);
+
+        $this->defaultHashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
+    }
+
+    /**
+     * @return void
+     */
+    public function testConstructorSetsDefaultValues()
+    {
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
         // Check if the default counter bits and hash algorithms are set
         $this->assertSame(5, $hll->getCounterBits());
-        $this->assertSame($hashAlgorithm, $hll->getHashAlgorithm());
+        $this->assertSame($this->defaultHashAlgorithm, $hll->getHashAlgorithm());
 
         // m should be 2^5 = 32
         $this->assertSame(32, $hll->getM());
@@ -31,7 +49,10 @@ class HyperLogLogTest extends TestCase
         $this->assertCount(32, $hll->getCounters());
     }
 
-    public function testConstructorSetsCustomValues(): void
+    /**
+     * @return void
+     */
+    public function testConstructorSetsCustomValues()
     {
         $hll = new HyperLogLog(10, 'sha256');
 
@@ -43,18 +64,24 @@ class HyperLogLogTest extends TestCase
         $this->assertCount(1024, $hll->getCounters());
     }
 
-    public function testConstructorFailsWithInvalidHashAlgorithm(): void
+    /**
+     * @return void
+     */
+    public function testConstructorFailsWithInvalidHashAlgorithm()
     {
         // In PHP 8+, the hash() function throws a ValueError if the provided algorithm does not exist.
         $this->expectException(\InvalidArgumentException::class);
         new HyperLogLog(10, 'invalid_algo_123');
     }
 
-    public function testGettersAndSetters(): void
+    /**
+     * @return void
+     */
+    public function testGettersAndSetters()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
         // Create a mock state to inject into the instance
         $mockCounters = array_fill(0, 32, 1);
@@ -64,7 +91,10 @@ class HyperLogLogTest extends TestCase
         $this->assertSame($mockCounters, $hll->getCounters());
     }
 
-    public function testAddAndCountUniqueElements(): void
+    /**
+     * @return void
+     */
+    public function testAddAndCountUniqueElements()
     {
         // Use sha256 to ensure universal test execution across different PHP environments
         $hll = new HyperLogLog(12, 'sha256');
@@ -81,7 +111,10 @@ class HyperLogLogTest extends TestCase
         $this->assertLessThan(5500, $estimate);
     }
 
-    public function testAddDuplicateElementsMaintainsCardinality(): void
+    /**
+     * @return void
+     */
+    public function testAddDuplicateElementsMaintainsCardinality()
     {
         $hll = new HyperLogLog(10, 'sha256');
 
@@ -92,19 +125,25 @@ class HyperLogLogTest extends TestCase
         $estimate = $hll->count();
 
         // Adding the exact same string 1000 times should result in a total count of ~1
-        $this->assertEqualsWithDelta(1.0, $estimate, 1.0);
+        $this->assertFloatEquals(1.0, $estimate, 1.0);
     }
 
-    public function testAddEmptyString(): void
+    /**
+     * @return void
+     */
+    public function testAddEmptyString()
     {
         $hll = new HyperLogLog(10, 'sha256');
         $hll->add('');
 
         // An empty string is a valid element that should be processed and count as 1.
-        $this->assertEqualsWithDelta(1.0, $hll->count(), 1.0);
+        $this->assertFloatEquals(1.0, $hll->count(), 1.0);
     }
 
-    public function testAddWithShortHashAlgorithmTriggersPaddingCorrectly(): void
+    /**
+     * @return void
+     */
+    public function testAddWithShortHashAlgorithmTriggersPaddingCorrectly()
     {
         // crc32 produces a 32-bit (4 bytes) hash.
         // This must trigger the internal right-padding with null bytes so unpack('J') doesn't fail.
@@ -117,7 +156,10 @@ class HyperLogLogTest extends TestCase
         $this->assertGreaterThan(1.0, $estimate);
     }
 
-    public function testCountTriggersSmallRangeCorrectionInternalBranch(): void
+    /**
+     * @return void
+     */
+    public function testCountTriggersSmallRangeCorrectionInternalBranch()
     {
         $hll = new HyperLogLog(12, 'sha256'); // m = 4096
 
@@ -134,7 +176,10 @@ class HyperLogLogTest extends TestCase
         $this->assertLessThan(15.0, $estimate);
     }
 
-    public function testCountTriggersLargeRangeCorrectionInternalBranch(): void
+    /**
+     * @return void
+     */
+    public function testCountTriggersLargeRangeCorrectionInternalBranch()
     {
         $hll = new HyperLogLog(10, 'sha256'); // m = 1024
 
@@ -146,7 +191,7 @@ class HyperLogLogTest extends TestCase
         $hll->setCounters($mockCounters);
 
         $estimate = $hll->count();
-        $twoPow32 = 4_294_967_296;
+        $twoPow32 = 4294967296;
 
         // Verify that the value is a valid float and not a mathematically undefined result (NAN).
         $this->assertFalse(is_nan($estimate), 'The estimate must not be NAN.');
@@ -155,22 +200,28 @@ class HyperLogLogTest extends TestCase
         $this->assertGreaterThan($twoPow32 / 30, $estimate);
     }
 
-    public function testTheoreticalErrorRateCalculation(): void
+    /**
+     * @return void
+     */
+    public function testTheoreticalErrorRateCalculation()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
         // Theoretical error rate formula: 1.04 / sqrt(m)
         // 1.04 / sqrt(16) = 1.04 / 4 = 0.26
-        $this->assertEqualsWithDelta(0.26, $hll->theoreticalErrorRate(16), 0.001);
+        $this->assertFloatEquals(0.26, $hll->theoreticalErrorRate(16), 0.001);
     }
 
-    public function testTheoreticalErrorRateThrowsExceptionForInvalidM(): void
+    /**
+     * @return void
+     */
+    public function testTheoreticalErrorRateThrowsExceptionForInvalidM()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid number of counters, $m must be greater than 0');
@@ -178,47 +229,59 @@ class HyperLogLogTest extends TestCase
         $hll->theoreticalErrorRate(0);
     }
 
-    public function testMeasureError(): void
+    /**
+     * @return void
+     */
+    public function testMeasureError()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
         // measureError simply returns the difference: estimate - real
         $this->assertSame(5, $hll->measureError(15, 10));
         $this->assertSame(-2, $hll->measureError(8, 10));
     }
 
-    public function testAlphaCalculationValues(): void
+    /**
+     * @return void
+     */
+    public function testAlphaCalculationValues()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
         // Test exact predefined constants for m=2 and m=16
-        $this->assertEqualsWithDelta(0.46852874309841, $hll->alpha(2), 0.0000001);
-        $this->assertEqualsWithDelta(0.673, $hll->alpha(16), 0.001);
+        $this->assertFloatEquals(0.46852874309841, $hll->alpha(2), 0.0000001);
+        $this->assertFloatEquals(0.673, $hll->alpha(16), 0.001);
 
         // Test the default fallback calculation for m >= 128 (e.g., 512)
         $expectedLargeAlpha = 0.7213 / (1 + 1.079 / 512);
-        $this->assertEqualsWithDelta($expectedLargeAlpha, $hll->alpha(512), 0.001);
+        $this->assertFloatEquals($expectedLargeAlpha, $hll->alpha(512), 0.001);
     }
 
-    public function testAlphaThrowsExceptionForInvalidM(): void
+    /**
+     * @return void
+     */
+    public function testAlphaThrowsExceptionForInvalidM()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
         $this->expectException(\InvalidArgumentException::class);
         $hll->alpha(0);
     }
 
-    public function testEstimateThrowsExceptionForInvalidZ(): void
+    /**
+     * @return void
+     */
+    public function testEstimateThrowsExceptionForInvalidZ()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid harmonic mean, $Z must be positive');
@@ -227,22 +290,28 @@ class HyperLogLogTest extends TestCase
         $hll->estimate(16, 0.0);
     }
 
-    public function testEstimateUsingLinearCounting(): void
+    /**
+     * @return void
+     */
+    public function testEstimateUsingLinearCounting()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
         $m = 64;
         $v = 16; // 16 empty counters out of 64
 
         // Linear Counting formula for small cardinalities: m * log(m / V)
         $expected = 64 * log(64 / 16); // 64 * log(4) ≈ 88.72
 
-        $this->assertEqualsWithDelta($expected, $hll->estimateUsingLinearCounting($v, $m), 0.001);
-        $this->assertEqualsWithDelta($expected, $hll->estimateUsingSmallCardinalitiesApproach($v, $m), 0.001);
+        $this->assertFloatEquals($expected, $hll->estimateUsingLinearCounting($v, $m), 0.001);
+        $this->assertFloatEquals($expected, $hll->estimateUsingSmallCardinalitiesApproach($v, $m), 0.001);
     }
 
-    public function testMergeThrowsExceptionForMismatchedCounterBits(): void
+    /**
+     * @return void
+     */
+    public function testMergeThrowsExceptionForMismatchedCounterBits()
     {
         $hll1 = new HyperLogLog(10, 'sha256');
         $hll2 = new HyperLogLog(12, 'sha256');
@@ -253,7 +322,10 @@ class HyperLogLogTest extends TestCase
         $hll1->merge($hll2);
     }
 
-    public function testMergeThrowsExceptionForMismatchedHashAlgorithms(): void
+    /**
+     * @return void
+     */
+    public function testMergeThrowsExceptionForMismatchedHashAlgorithms()
     {
         $hll1 = new HyperLogLog(10, 'sha256');
         $hll2 = new HyperLogLog(10, 'sha1');
@@ -264,7 +336,10 @@ class HyperLogLogTest extends TestCase
         $hll1->merge($hll2);
     }
 
-    public function testMergeUpdatesCountersWithMaxValues(): void
+    /**
+     * @return void
+     */
+    public function testMergeUpdatesCountersWithMaxValues()
     {
         $hll1 = new HyperLogLog(5, 'sha256'); // m = 32
         $hll2 = new HyperLogLog(5, 'sha256'); // m = 32
@@ -298,7 +373,10 @@ class HyperLogLogTest extends TestCase
         $this->assertSame($hll1, $result);
     }
 
-    public function testMergeEstimatesUnionOfTwoSetsCorrectly(): void
+    /**
+     * @return void
+     */
+    public function testMergeEstimatesUnionOfTwoSetsCorrectly()
     {
         $hll1 = new HyperLogLog(12, 'sha256');
         $hll2 = new HyperLogLog(12, 'sha256');
@@ -323,23 +401,52 @@ class HyperLogLogTest extends TestCase
         $this->assertLessThan(5500, $estimate);
     }
 
-    public function testEstimateUsingLargeCardinalitiesApproach(): void
+    /**
+     * @return void
+     */
+    public function testEstimateUsingLargeCardinalitiesApproach()
     {
         $hashAlgorithm = PHP_VERSION >= 8100 ? 'xxh3' : 'sha256';
 
-        $hll = new HyperLogLog(hashAlgorithm: $hashAlgorithm);
+        $hll = new HyperLogLog($this->defaultCounterBits, $this->defaultHashAlgorithm);
 
-        $rawEstimate = 3_000_000_000;
-        $twoPow32 = 4_294_967_296;
+        $rawEstimate = 3000000000;
+        $twoPow32 = 4294967296;
 
         // Large Cardinality formula to correct hash collision bias near 2^32:
         // -2^32 * log(1 - E / 2^32)
         $expected = -$twoPow32 * log(1 - $rawEstimate / $twoPow32);
 
-        $this->assertEqualsWithDelta(
+        $this->assertFloatEquals(
             $expected,
             $hll->estimateUsingLargeCardinalitiesApproach($rawEstimate),
             0.001
+        );
+    }
+
+    /**
+     * Custom assertion helper to support delta comparisons across all PHPUnit versions
+     * without conflicting with native static methods.
+     *
+     * @param float $expected The expected value
+     * @param float $actual   The actual value to test
+     * @param float $delta    The allowed margin of error
+     *
+     * @return void
+     */
+    private function assertFloatEquals(float $expected, float $actual, float $delta)
+    {
+        $difference = abs($expected - $actual);
+
+        $this->assertLessThanOrEqual(
+            $delta,
+            $difference,
+            sprintf(
+                'Failed asserting that actual %s matches expected %s within a delta of %s.',
+                $actual,
+                $expected,
+                $delta
+            )
         );
     }
 }

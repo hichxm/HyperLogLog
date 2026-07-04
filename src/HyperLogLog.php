@@ -16,18 +16,22 @@ namespace Hichxm\HyperLogLog;
 class HyperLogLog
 {
     /** @var int */
-    private const TWO_POW_32 = 4_294_967_296;
-    private int $counterBits;
+    const TWO_POW_32 = 4294967296;
 
-    private string $hashAlgorithm;
+    /** @var int */
+    private $counterBits;
 
-    private int $m;
+    /** @var string */
+    private $hashAlgorithm;
+
+    /** @var int */
+    private $m;
 
     /** @var array<int, int> Counters storing maximum rho values */
-    private array $counters;
+    private $counters;
 
     /** @var bool Indicates if the selected hash algorithm produces less than 64 bits */
-    private bool $needsPadding;
+    private $needsPadding;
 
     /**
      * HyperLogLog constructor.
@@ -95,8 +99,10 @@ class HyperLogLog
      * and leading zero count, and the register is updated with the maximum observed rho value.
      *
      * @param string $value element to insert
+     *
+     * @return void
      */
-    public function add(string $value): void
+    public function add(string $value)
     {
         $hashString = $this->hash($value, $this->hashAlgorithm);
 
@@ -179,7 +185,9 @@ class HyperLogLog
         }
 
         $this->counters = array_map(
-            static fn (int $counter, int $otherCounter): int => max($counter, $otherCounter),
+            static function (int $counter, int $otherCounter): int {
+                return max($counter, $otherCounter);
+            },
             $this->counters,
             $other->counters
         );
@@ -221,17 +229,34 @@ class HyperLogLog
             throw new \InvalidArgumentException('Invalid number of counters, $m must be greater than 0');
         }
 
-        return match ($m) {
-            2 => 0.46852874309841,
-            4 => 0.56806457964166,
-            8 => 0.63557660535301,
-            16 => 0.673,
-            32 => 0.697,
-            64 => 0.709,
-            128 => 0.71527049326382,
-            256 => 0.71827259324955,
-            default => 0.7213 / (1 + 1.079 / $m),
-        };
+        switch ($m) {
+            case 2:
+                return 0.46852874309841;
+
+            case 4:
+                return 0.56806457964166;
+
+            case 8:
+                return 0.63557660535301;
+
+            case 16:
+                return 0.673;
+
+            case 32:
+                return 0.697;
+
+            case 64:
+                return 0.709;
+
+            case 128:
+                return 0.71527049326382;
+
+            case 256:
+                return 0.71827259324955;
+
+            default:
+                return 0.7213 / (1 + 1.079 / $m);
+        }
     }
 
     /**
