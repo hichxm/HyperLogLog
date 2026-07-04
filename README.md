@@ -34,7 +34,7 @@ It is **not** appropriate when an exact distinct count is required.
 
 ## Requirements
 
-- **PHP 8.0, 8.1, 8.2, 8.3, 8.4 and 8.5**
+- **PHP 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4 and 8.5**
 - No external dependencies
 
 > **Note:** The `xxh3` and `xxh128` hash algorithms are available only when supported by your PHP version and build. If
